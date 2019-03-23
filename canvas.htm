@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>绘制直方图</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+    <canvas id="canvas" height="600" width="1024"></canvas>
+    <audio src="../media/god_knows.mp3" autoplay controls></audio>
+    <div onclick="audioFile.play()">PLAY</div>
+    <div onclick="audioFile.pause()">PAUSE</div>
+    <script>
+        /*
+         * https://developer.mozilla.org/zh-CN/docs/Web/API/Web_Audio_API/Visualizations_with_Web_Audio_API#%E5%88%9B%E5%BB%BA%E4%B8%80%E4%B8%AA%E6%B3%A2%E5%BD%A2%E7%A4%BA%E6%B3%A2%E5%99%A8
+         *
+         */
+
+        //基本
+        //获取HTML 元素中的音频文件 和 画布 及画布大小
+        var audioFile = document.querySelector("audio");
+        var canvas = document.getElementById("canvas");
+        var canCtx = canvas.getContext('2d');
+        var height = canvas.height;
+        var width = canvas.width;
+        //音频上下文
+        var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        //解析器
+        var analyser = audioCtx.createAnalyser();
+        //将音频上下文连接至 输入源
+        var source = audioCtx.createMediaElementSource(audioFile);
+        //将音频上下文连接至 解析器(分析器节点)
+        source.connect(analyser);
+        //将解析完成的音频连接至 输出 默认输出目的地(系统默认设备)
+        analyser.connect(audioCtx.destination);
+
+        //频率条形图
+        //首先设置好 解析器 和 空数组
+        //FFT 大小减小是为了让各个频率条足够宽, 而不密集
+        //bufferLength 缓冲长度
+        //frequencyBinCount 频率计数
+        //analyser.fftSize = 256;
+        analyser.fftSize = 256;
+        var bufferLength = analyser.frequencyBinCount;
+        console.log(bufferLength);      //128
+        var dataArray = new Uint8Array(bufferLength);
+        //清空画布
+        canCtx.clearRect(0, 0, width, height);
+
+        function draw() {
+            //使用requestAnimationFrame 来设置一个循环, 这样显示的数据就
+            //可以一直刷新(绘图持续更新), 并且每一帧都清空一次画布
+            //Visual 视觉
+            drawVisual = requestAnimationFrame(draw);
+            //获取时间域上的数据并将它复制到数组中
+            analyser.getByteFrequencyData(dataArray);
+            //设置画布填充样式和 填充矩形(起点x, y, 矩形尺寸width, height)
+            canCtx.fillStyle = 'rgb(gray)';
+            canCtx.fillRect(0, 0, width, height);
+
+            //barWidth 是每个条形的宽度
+            //使用画布的宽度 除以 条的个数 就可以算出这个宽度
+            //这里乘2.5 是因为
+            /*
+             * 有很多返回的频率区域中是没有声音的，我们每天听到的大多数声音也
+             * 只是在一个很小的频率区域当中。在条形图中我们肯定不想看到大片的
+             * 空白条，所以我们就把一些能正常显示的条形拉宽来填充这些空白区域.
+             * 实验一下什么空白条. 就是条之间的间隙(有条但是很小很小)
+             */
+            //var barWidth = (width / bufferLength) * 2.5 + (0.1 * 4);
+            //var barWidth = (width / bufferLength) * 3.9;
+            var barWidth = (width / bufferLength);
+            console.log(barWidth);
+            var barHeight;
+            var x = 0;
+            //在循环中遍历dataArray 中的数据.
+            for (let i = 0; i < bufferLength; i++) {
+                //barHeight = dataArray[i] / 2;
+                barHeight = dataArray[i] * 2;
+
+                //条形越高, 亮度越亮
+                canCtx.fillStyle = 'rgb(' + (barHeight + 100) + ', 50, 50)';
+                //console.log(barHeight);
+                //填充矩形(起点x, y, 矩形尺寸width, height)
+                canCtx.fillRect(x, height - barHeight , barWidth, barHeight * 2);
+                
+                x += barWidth + 1;
+            }
+        }
+        draw();
+    </script>    
+</body>
+</html>

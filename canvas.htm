@@ -35,8 +35,8 @@
         //将解析完成的音频连接至 输出 默认输出目的地(系统默认设备)
         analyser.connect(audioCtx.destination);
 
-        analyser.minDecibels = -140;
-        analyser.maxDecibels = -50;
+        analyser.minDecibels = -1400;
+        analyser.maxDecibels = -500;
         
         //平滑每个数据的平均值 ?
         analyser.smoothingTimeConstant = 1;
@@ -63,6 +63,7 @@
             drawVisual = requestAnimationFrame(draw);
             //获取时间域上的频率数据并将它复制到数组中
             analyser.getFloatFrequencyData(dataArray);
+            //console.log("The data array: " + dataArray);
             //设置画布填充样式和 填充矩形(起点x, y, 矩形尺寸width, height)
             canCtx.fillStyle = 'rgb(gray)';
             canCtx.fillRect(0, 0, width, height );
@@ -84,10 +85,12 @@
             var x = 0;
             //在循环中遍历dataArray 中的数据.
             //好像会死循环
-            console.log(bufferLength);
-            for (let i = 0; i <= bufferLength ; i++) {
-                //console.log(i);
-                /* //barHeight = dataArray[i] / 2;
+            //极高的CPU 占用
+            //先试着自己画一个?
+            console.log("Buffer Length " + bufferLength);
+            for (let i = 0; i <= 10 ; i++) {
+                console.log(1);
+                //barHeight = dataArray[i] / 2;
                 barHeight = dataArray[i] * 1.5;
 
                 //条形越高, 亮度越亮 // 已去掉 改变barHeight 的数值, 加或者减 
@@ -96,7 +99,7 @@
                 //填充矩形(起点x, y, 矩形尺寸width, height)
                 canCtx.fillRect(x, height - barHeight , barWidth, barHeight );
                 
-                x += barWidth + 1; */
+                x += barWidth + 1;
             }
         }
         draw();
